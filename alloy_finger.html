@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--禁用双击/缩放缩放，可以更好地控制网页。支持touch-action属性的最新浏览器不需要这样做-->
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+    <!--删除Windows Phone上的点击突出显示-->
+    <meta name="msapplication-tap-highlight" content="no" />
+    <title>Title</title>
+    <link rel="stylesheet" href="/expand/layui/css/layui.css">
+</head>
+<style>
+    #myElement{
+        background-color: #00BCD4;
+        width: 100px;
+        height: 100px;
+        border: 1px solid black;
+    }
+    #time{
+        background-color: #9E9E9E;
+        height: 100px;
+    }
+</style>
+<body>
+<div style="margin-top: 10%;">
+    <div id="myElement"><img src="http://lb_teacher.combedu.com/public/home/images/login_bg.jpg" alt="" onclick="img_cz()" style="width: 25px;"></div>
+    <div id="time"></div>
+    <input type="hidden" class="cache_test" value="0">
+</div>
+
+</body>
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="./layui/layui.all.js"></script>
+<script src="./layui/alloy_finger.js"></script>
+<script src="./layui/transform.js"></script>
+<script src="./layui/image_loaded.js"></script>
+<script src="./layui/to.js"></script>
+<script>
+    var time = document.querySelector("#time"),//时间轴
+        myElement = document.querySelector("#myElement"),//正方形
+        hammertime = new Hammer(time),
+        xzb = '',//X坐标
+        inizb = '',初始坐标
+    img_url = 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1563871104010&di=ed8d1e60f5c27e8fb3df0f0492147a82&imgtype=0&src=http%3A%2F%2Fpic60.nipic.com%2Ffile%2F20150129%2F6448355_204110337000_2.jpg';
+
+    //pan 表示只监听水平移动事件
+    var START_X = Math.round((window.innerWidth - myElement.offsetWidth) / 2);
+    hammertime.on('pan panend panstart', function(ev) {
+        switch (ev.type) {
+            case 'panstart':
+                xzb = inizb + ev.deltaX;
+                break;
+            case 'panend':
+                xzb = ev.deltaX;
+                break;
+        }
+//        xzb = START_X + ev.deltaX;
+        xzb = ev.deltaX;
+        $("#myElement").css("transform","translateX("+ xzb +"px)");//水平移动动画
+    });
+
+
+    function ease(x) {
+        return Math.sqrt(1 - Math.pow(x - 1, 2));
+    }
+
+    //点击图片弹出放大
+    function img_cz() {
+        var top = $("#time").offset().top;//获取时间轴距离浏览器顶端的Y坐标
+        layer.open({
+            type: 1,//弹框类型
+            id: 'layui-layer-xz_sf',
+            title:false,//是否显示标题
+            area: ['120px', '200px'],//宽高
+            offset:[(top+20) + 'px',xzb + 'px'],//坐标
+            anim:2,//弹出动画（从最底部往上滑入）
+            resize:false,//是否允许拉伸
+            content: '<img src="'+ img_url +'" alt="" style="width: 120px;height: 200px;">' //这里content是一个普通的String
+        });
+        var xz_sf = document.querySelector(".layui-layer-page");
+        Transform(xz_sf);
+        var initScale = 1;
+        new AlloyFinger(xz_sf, {
+            multipointStart: function () {
+                To.stopAll();
+                initScale = xz_sf.scaleX;
+            },
+            //旋转
+            rotate: function (evt) {
+                xz_sf.rotateZ += evt.angle;
+            },
+            //缩放
+            pinch: function (evt) {
+                xz_sf.scaleX = xz_sf.scaleY = initScale * evt.zoom;
+            },
+            multipointEnd: function () {
+                To.stopAll();
+                if (xz_sf.scaleX < 1) {
+
+                    new To(xz_sf, "scaleX", 1, 500, ease);
+                    new To(xz_sf, "scaleY", 1, 500, ease);
+                }
+                if (xz_sf.scaleX > 2) {
+
+                    new To(xz_sf, "scaleX", 2, 500, ease);
+                    new To(xz_sf, "scaleY", 2, 500, ease);
+                }
+                var rotation = xz_sf.rotateZ % 360;
+
+                if (rotation < 0)rotation = 360 + rotation;
+                xz_sf.rotateZ=rotation;
+
+                if (rotation > 0 && rotation < 45) {
+                    new To(xz_sf, "rotateZ", 0, 500, ease);
+                } else if (rotation >= 315) {
+                    new To(xz_sf, "rotateZ", 360, 500, ease);
+                } else if (rotation >= 45 && rotation < 135) {
+                    new To(xz_sf, "rotateZ", 90, 500, ease);
+                } else if (rotation >= 135 && rotation < 225) {
+                    new To(xz_sf, "rotateZ", 180, 500, ease);
+                } else if (rotation >= 225 && rotation < 315) {
+                    new To(xz_sf, "rotateZ", 270, 500, ease);
+                }
+            },
+            //移动
+            pressMove:function(evt){
+                xz_sf.translateX += evt.deltaX;
+                xz_sf.translateY += evt.deltaY;
+                evt.preventDefault();
+            }
+        });
+    }
+
+
+
+
+
+</script>
+</html>
